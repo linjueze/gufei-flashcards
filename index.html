@@ -1,0 +1,361 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#f5f4ef">
+<link rel="icon" type="image/png" href="./icon.png">
+<link rel="apple-touch-icon" href="./icon.png">
+<title>固废刷题卡</title>
+<style>
+  :root {
+    color-scheme: light;
+    --paper: #f5f4ef;
+    --card: #fffefa;
+    --ink: #18302c;
+    --muted: #53645d;
+    --line: #cdd5cb;
+    --green: #245846;
+    --green-hover: #193e32;
+    --tint: #e9f0e8;
+    --review: #78462c;
+    --review-bg: #f5eade;
+    font-family: "Microsoft YaHei", "PingFang SC", "Noto Sans CJK SC", system-ui, sans-serif;
+  }
+
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--paper); color: var(--ink); }
+  button, select { font: inherit; }
+  button { cursor: pointer; }
+  button:disabled { cursor: default; }
+  [hidden] { display: none !important; }
+
+  .shell { width: min(100% - 44px, 840px); margin: 0 auto; padding: clamp(30px, 6vw, 70px) 0 36px; }
+  .mast { display: flex; justify-content: space-between; align-items: flex-end; gap: 24px; }
+  h1 { font-size: clamp(30px, 5vw, 49px); line-height: 1.12; margin: 0; letter-spacing: 0.015em; }
+  .lede { color: var(--muted); font-size: 15px; line-height: 1.6; margin: 10px 0 0; }
+  .summary { min-width: 192px; font-size: 13px; line-height: 1.5; }
+  .summary-head { display: flex; justify-content: space-between; gap: 16px; color: var(--muted); }
+  .summary strong { color: var(--ink); font-weight: 650; }
+  .summary small { display: block; margin-top: 2px; color: var(--muted); font-size: 12px; }
+  progress { width: 100%; height: 6px; border: 0; border-radius: 99px; background: #dce4d9; overflow: hidden; display: block; margin: 7px 0; }
+  progress::-webkit-progress-bar { background: #dce4d9; }
+  progress::-webkit-progress-value { background: var(--green); border-radius: 99px; }
+  progress::-moz-progress-bar { background: var(--green); border-radius: 99px; }
+
+  .controls { display: flex; align-items: flex-end; gap: 12px; margin: 29px 0 13px; }
+  .field { display: grid; gap: 6px; color: var(--muted); font-size: 13px; font-weight: 600; min-width: 0; }
+  .field:first-child { flex: 1 1 212px; }
+  .field:nth-child(2) { flex: 0 1 160px; }
+  .field label { padding-left: 2px; }
+  .button, select {
+    min-height: 46px; border: 1px solid var(--line); border-radius: 8px; padding: 9px 14px;
+    background: var(--card); color: var(--ink); font-size: 15px; line-height: 1.4;
+  }
+  select { width: 100%; padding-right: 8px; }
+  .button:hover:not(:disabled), select:hover { border-color: var(--green); background: #edf1e9; }
+  .button:focus-visible, select:focus-visible { outline: 3px solid #3b7765; outline-offset: 3px; }
+  .button:disabled { color: #66726a; background: transparent; border-color: #dbe0d8; }
+  .button.primary { background: var(--green); color: #fff; border-color: var(--green); font-weight: 700; }
+  .button.primary:hover:not(:disabled) { background: var(--green-hover); }
+  .button.review { color: var(--review); border-color: #d6bca7; }
+  .button.review:hover { background: var(--review-bg); }
+  .quiet { white-space: nowrap; }
+  .card {
+    background: var(--card); border: 1px solid var(--line); border-radius: 16px;
+    box-shadow: 0 7px 24px rgba(35, 59, 46, .055);
+    padding: clamp(22px, 5vw, 43px);
+    min-height: 320px; display: grid; align-content: start;
+  }
+  .meta { display: flex; flex-wrap: wrap; align-items: center; gap: 7px 12px; color: var(--muted); font-size: 13px; line-height: 1.6; }
+  .tag { background: var(--tint); color: var(--green); border-radius: 5px; padding: 2px 8px; }
+  .tag[data-status="review"] { background: var(--review-bg); color: var(--review); }
+  .index { margin-inline-start: auto; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  h2 { margin: 23px 0 24px; font-size: clamp(22px, 3.9vw, 33px); line-height: 1.45; font-weight: 700; overflow-wrap: anywhere; }
+  .prompt { display: flex; flex-direction: column; min-height: 180px; }
+  .actions, .grades, .navigation { display: flex; align-items: center; flex-wrap: wrap; gap: 9px; }
+  .actions { margin-top: auto; }
+  .answer { margin-top: 22px; padding-top: 21px; border-top: 1px solid var(--line); }
+  .answer h3 { margin: 0 0 9px; font-size: 15px; color: var(--green); }
+  .answer p { margin: 0 0 8px; font-size: clamp(15px, 2.5vw, 17px); line-height: 1.7; overflow-wrap: anywhere; }
+  .grades { margin-top: 20px; }
+  .navigation { justify-content: space-between; margin-top: 14px; }
+  .keys { color: var(--muted); font-size: 12px; line-height: 1.5; text-align: center; }
+  .empty { padding-block: 16px; }
+  .empty h2 { margin-bottom: 10px; }
+  .empty p { color: var(--muted); margin-bottom: 22px; }
+  .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .storage-note { display: block; color: var(--muted); font-size: 13px; margin-top: 16px; }
+  @media (max-width: 580px) {
+    .shell { width: calc(100% - 28px); }
+    .mast { display: grid; gap: 18px; }
+    .summary { width: 100%; }
+    .controls { display: grid; grid-template-columns: 1.18fr 1fr; gap: 8px; margin-top: 21px; }
+    .controls .quiet { grid-column: 1 / -1; justify-self: start; }
+    .button, select { padding-inline: 10px; }
+    .meta { gap: 5px 8px; }
+    .card { min-height: 290px; }
+    .prompt { min-height: 169px; }
+    .keys { display: none; }
+  }
+  @media (pointer: coarse) { .keys { display: none; } }
+</style>
+</head>
+<body>
+<main class="shell">
+  <header class="mast">
+    <div>
+      <h1>固废刷题卡</h1>
+      <p class="lede">先闭卷回忆，再翻面核对采分点。</p>
+    </div>
+    <div class="summary">
+      <div class="summary-head">
+        <span>全套进度</span>
+        <strong id="mastered"></strong>
+      </div>
+      <progress id="progress" aria-label="已掌握卡片进度" value="0"></progress>
+      <small id="review-count"></small>
+    </div>
+  </header>
+
+  <form class="controls" aria-label="选卡范围">
+    <div class="field"><label for="chapter">章节</label><select id="chapter"><option value="all">全部讲次</option></select></div>
+    <div class="field"><label for="scope">范围</label><select id="scope">
+      <option value="all">全部卡片</option>
+      <option value="number">数值与计算</option>
+      <option value="review">待复习</option>
+    </select></div>
+    <button class="button quiet" id="shuffle" type="button" aria-pressed="false">随机顺序</button>
+  </form>
+
+  <article class="card" aria-label="当前刷题卡">
+    <div id="card-content">
+      <div class="meta">
+        <span id="topic"></span>
+        <span class="tag" id="kind"></span>
+        <span class="tag" id="state" hidden></span>
+        <span class="index" id="index"></span>
+      </div>
+      <div class="prompt">
+        <h2 id="question"></h2>
+        <div class="actions">
+          <button type="button" class="button primary" id="flip" aria-controls="answer" aria-expanded="false">翻卡看答案</button>
+        </div>
+      </div>
+      <section class="answer" id="answer" aria-labelledby="answer-title" hidden>
+        <h3 id="answer-title">参考答案</h3>
+        <div id="answer-text"></div>
+        <div class="grades">
+          <button type="button" class="button review" id="needs-review">待复习</button>
+          <button type="button" class="button primary" id="learned">已掌握</button>
+        </div>
+      </section>
+    </div>
+    <div class="empty" id="empty" hidden>
+      <h2 id="empty-title"></h2>
+      <p id="empty-text"></p>
+      <button type="button" class="button primary" id="clear-filter">查看全部卡片</button>
+    </div>
+  </article>
+
+  <nav class="navigation" aria-label="切换卡片">
+    <button type="button" class="button" id="previous">← 上一张</button>
+    <span class="keys" aria-hidden="true">← → 切卡　·　空格翻卡</span>
+    <button type="button" class="button" id="next">下一张 →</button>
+  </nav>
+  <small class="storage-note" id="storage-note" hidden>当前浏览器无法保存进度，标记仅在本次打开期间有效。</small>
+  <div class="sr-only" id="notice" role="status" aria-live="polite" aria-atomic="true"></div>
+  <noscript>请在浏览器中开启 JavaScript 后使用刷题卡片。</noscript>
+</main>
+
+<script type="application/json" id="card-data">[{"n":1,"q":"什么是固体废物？","a":"在生产、生活和其他活动中产生，丧失原有利用价值或被抛弃、放弃的物品、物质。\n形态包括固态、半固态和置于容器中的气态，也包括依法纳入固废管理的物品、物质。","kind":"概念","id":"986b82c5efc1"},{"n":1,"q":"固体废物常按哪些依据分类？","a":"化学性质：有机、无机。\n形态：固态、半固态等。\n危害：一般、有害。\n管理类别：生活垃圾、工业固废、危险废物、建筑垃圾、农业固体废物等。","kind":"问答","id":"5424de8abb0e"},{"n":1,"q":"河海大学环境工程专业特色如何体现在本课程？","a":"课程把水环境治理与固体废物处理结合起来。清淤产生淤泥，污水处理产生污泥，两类泥的减量、处理和资源化是课程特色。","kind":"问答","id":"ec70b081012d"},{"n":2,"q":"处理、处置和资源化有什么区别？","a":"处理：采用物理、化学或生物方法，推动减量、无害和利用。\n处置：将废物最终安全安置，与环境隔离。\n资源化：把固废作为材料、原料或能源直接利用或加工后再生利用。","kind":"辨析","id":"cb35cf41148d"},{"n":2,"q":"部分量资源化与全量资源化的区别是什么？","a":"部分量资源化只利用其中可用的部分，剩余物另行安全处置。\n全量资源化使全部物料在满足用途和环境要求的前提下获得利用出路。","kind":"辨析","id":"b0f63dc6218d"},{"n":2,"q":"3R 与固废处理“三化”各是什么？","a":"3R 是源头减量（Reduce）、再使用（Reuse）、再生利用（Recycle），反映循环经济的优先顺序。\n三化是减量化、无害化、资源化，概括固废处理的目标。","kind":"辨析","id":"bff8ae3d498f"},{"n":2,"q":"固废处理如何纳入循环经济体系？","a":"在生产、流通和消费环节减少废物产生，回收利用有价值组分，使其重新进入生产或消费过程，从而减少原生资源消耗。","kind":"问答","id":"9fcef41ae43b"},{"n":3,"q":"我国生活垃圾的典型组成和性质是什么？","a":"组分复杂，厨余较多，整体含水率较高；纸、塑料、金属等可回收组分随时期变化呈增加趋势。\n组成受地域、生活习惯和季节影响。","kind":"问答","id":"92339fe8414f"},{"n":3,"q":"怎样区分湿基、干基和体积含水率？","a":"湿基含水率＝水质量÷湿样总质量。\n干基含水率＝水质量÷干固体质量。\n体积含水率＝水体积÷总体积。","kind":"辨析","id":"4a28e5158757"},{"n":3,"q":"挥发分 VS 和灰分 A 如何测定和换算？","a":"干样按规定条件灼烧，失去的质量占干样质量的比例为 VS，残留质量占比为 A。\n同一干基上 A＋VS＝100%，VS 可近似反映有机质含量。","kind":"辨析","id":"40f9013f5d38"},{"n":3,"q":"高位与低位热值差在哪？生活垃圾自持与适宜进炉各记哪个数？","a":"高位热值计入燃烧产物中水蒸气的冷凝潜热，低位热值按水蒸气逸出计。\n课堂值：低位热值＞3350 kJ/kg 对应点火后的自持燃烧，约5000 kJ/kg 为适宜进炉参考值。","kind":"数值","id":"0508993a7a28"},{"n":3,"q":"生活垃圾四分类是什么？课件强调怎样的处理动向？","a":"可回收物、有害垃圾、厨余垃圾（湿垃圾）、其他垃圾（干垃圾）。\n课件时间线：2020年底前 46 城先行强制分类。2023 年基本实现原生生活垃圾零填埋是课堂所述目标，焚烧发电成为主流。","kind":"问答","id":"029196ff8684"},{"n":3,"q":"城镇与农村生活垃圾的管理责任如何分工？","a":"城镇由当地环卫等主管部门组织分类和收运，产生者依法负相应责任，许可企业可接受委托。\n农村以县级人民政府为责任主体，按村收集、镇转运、县处理组织。","kind":"辨析","id":"e8ec593b6253"},{"n":3,"kind":"概念","q":"渗透系数 k 表示什么？怎样按达西关系表示流量？","a":"k 衡量介质的透水能力。\nQ＝kAi，A 为过流面积，i 为水力梯度。单位应统一。","id":"978b29c2de2f"},{"n":4,"q":"生活垃圾焚烧温度怎么记？3T＋E 分别是什么？","a":"课件值：生活垃圾焚烧温度＞850 ℃。\n3T＋E：温度、停留时间、湍流混合、过量氧气，用于促进充分燃烧。","kind":"数值","id":"016f5f237972"},{"n":4,"q":"生活垃圾焚烧厂的主要系统有哪些？","a":"接收与前处理：贮存、沥水、均化、供料。\n焚烧与供风：组织燃烧。余热利用：供热或发电。\n烟气处理：除尘、脱酸等。灰渣处理：炉渣、飞灰分流。\n配套还有废水处理与自动控制。","kind":"问答","id":"53afbf37b7cc"},{"n":4,"q":"生活垃圾焚烧的炉渣与飞灰分别怎么处理？","a":"炉渣通常按一般固废路线，脱水、筛分或磁选后视质量利用，剩余部分妥善处置。\n飞灰会富集重金属等污染物，按危废要求单独收集，经螯合、稳定化等处理，满足相应入场要求后送相应设施。","kind":"辨析","id":"77a18c838dc3"},{"n":4,"q":"每入炉 100 t 生活垃圾，课堂近似如何分配产物？","a":"折合气体约75 t、炉渣约22 t、飞灰约3 t。\n这是入炉垃圾的质量转化简化口径。实际烟气质量还受助燃空气等影响。飞灰工程估算区间约2%～5%。","kind":"数值","id":"4c7b0fef14fd"},{"n":4,"q":"我国生活垃圾焚烧以哪种炉型为主？国产炉怎样适应本地垃圾？","a":"以机械炉排炉为主。其他炉型包括流化床、旋转窑、气化熔融炉。\n针对高含水、高灰分、低热值，采用沥水或预处理、多级燃烧、烟气再循环预热、加长炉膛等措施。","kind":"问答","id":"dd48d8b0ab70"},{"n":4,"q":"课件给出的 2025 年生活垃圾量和焚烧量是多少？","a":"生活垃圾约2.65亿 t，焚烧约2.07亿 t，约占78%。按第4讲2025年口径记忆。","kind":"数值","id":"a3d519a55974"},{"n":5,"q":"什么是好氧堆肥？为什么要先堆肥再利用？","a":"在受控供氧下，微生物分解有机物，使物料稳定、腐熟，得到堆肥或土壤改良材料。\n堆肥有助于减少腐败臭气、灭活病原和虫卵，并降低生料对植物的危害。","kind":"概念","id":"fd7f51c02c80"},{"n":5,"q":"哪些物料适合堆肥？选料要看哪些条件？","a":"常见原料：畜禽粪便配秸秆、餐厨垃圾、污水厂污泥、酒糟或食品加工残渣。\n要求可降解有机质、适中水分、合适碳氮比和良好孔隙。课件原料示例含水率40%～60%，C/N 约20∶1～30∶1。","kind":"问答","id":"1c5b9d44b0fa"},{"n":5,"kind":"数值","q":"好氧堆肥中温阶段和高温阶段的典型温度是多少？","a":"中温阶段约30～45 ℃，高温阶段通常45～70 ℃。\n高温阶段有利于加快分解、灭活病原和虫卵，之后还需经历降温腐熟。","id":"3c7717d8d69c"},{"n":6,"q":"厌氧消化处理哪些原料？产物是什么？","a":"厌氧消化是在无氧条件下由微生物分解有机物的过程。\n常用餐厨、畜禽粪污、市政污泥等，得到沼气（主要是 CH₄、CO₂）、沼液、沼渣。","kind":"概念","id":"eba20a8fd374"},{"n":6,"q":"湿式和干式厌氧消化各适合什么进料？课件含固率是多少？","a":"湿式适合可泵送、易搅拌的浆料，如污泥和粪尿。课件示例进料含固率＜10%。\n干式适合高含固率的半固态料，如厨余配废纸或草木。课件示例进料含固率约15%～40%，通常少加稀释水。","kind":"数值","id":"df5bfa49a67d"},{"n":6,"q":"厌氧消化的四个反应阶段依次是什么？","a":"水解：复杂有机物变成小分子。\n产酸：生成挥发性脂肪酸等。\n产氢产乙酸：形成乙酸、H₂、CO₂ 等。\n产甲烷：生成 CH₄ 等。","kind":"问答","id":"f11797911df8"},{"n":6,"q":"湿式餐饮垃圾消化，100 t 进料的课堂案例去向是什么？","a":"约3.5 t 毛油、10～15 t 杂质、8 t 沼气、70～75 t 沼液、3 t 沼渣。\n同一边界下按输入＝输出＋积存核算，精算时用同一工况并核对补水等输入。","kind":"数值","id":"818c718fa9b2"},{"n":6,"kind":"辨析","q":"好氧堆肥和厌氧消化怎样按供氧、物料状态和产物区分？","a":"好氧堆肥需供氧，常用含水适中、有孔隙的固态料，主要产物是腐熟堆肥。\n厌氧消化需无氧，湿式用浆料，干式用高含固率半固态料，产沼气、沼液和沼渣。","id":"39586fdf57bb"},{"n":7,"q":"热解和焚烧在供氧、热量供需和产物上有什么区别？","a":"热解在无氧或缺氧下供热，使有机大分子裂解，得到气、油、炭。热解温度随所需产物调节。\n焚烧在足量空气下高温氧化，释放热量，形成烟气和灰渣。生活垃圾焚烧温度按课件记＞850 ℃。","kind":"辨析","id":"8c43f1433abd"},{"n":7,"q":"哪些固废有热解应用实例？","a":"干燥的木屑、秸秆，废塑料、废橡胶，动物残体等。厨余和污泥也有采用相应工艺处理的实例。","kind":"问答","id":"6f0cbfc310ac"},{"n":7,"q":"热解的前三项优点是什么？","a":"① 有机物变成可储存利用的气、油、炭。\n② 缺氧工况排气量较小。\n③ 硫和重金属等可较多留在炭中，炭仍需按性质管理。","kind":"问答","id":"6d83fc5ecc2a"},{"n":7,"q":"湿料做水热炭化与常规干式炭化有什么区别？","a":"水热炭化以水为介质，经加热、水解、聚合等，产水热炭、液相和少量气体，可直接处理湿料。\n干式炭化以加热裂解为主，湿料常需先干燥。","kind":"辨析","id":"5ddc0140d866"},{"n":8,"q":"什么是生活垃圾卫生填埋？它有哪三个主要功能？","a":"采用防渗、压实覆盖、导气和渗沥液处理等工程措施，将生活垃圾最终安全处置。\n三个功能：贮留垃圾、隔断垃圾与外界的水力联系、处理水气和垃圾本身。","kind":"概念","id":"5d23f83e1b35"},{"n":8,"q":"卫生填埋场要有哪些系统？底部防渗怎么构成？","a":"按单元堆填、压实和覆盖，配封场覆盖、雨污分流、渗沥液收集处理、填埋气收集处理及监测。\n课件双膜例：土工膜＋压实黏土，配保护、排水与渗漏检测层。","kind":"问答","id":"75053c650480"},{"n":8,"q":"渗沥液从哪里来？典型成分和 COD 量级是什么？","a":"降雨或灌溉下渗、垃圾自含水排出及回灌等都会产生渗沥液。\n可能含溶解态和悬浮态污染物、重金属、难降解有机物。课件案例 COD 约15 000～20 000 mg/L。","kind":"数值","id":"877582d768b3"},{"n":8,"q":"存量生活垃圾填埋场有哪四种主要治理模式？","a":"① 原位封场＋生态修复。\n② 好氧加速稳定化＋生态修复。\n③ 全量或局部开挖＋筛分资源化。\n④ 光伏电站＋封场利用。\n串讲所列存量约50亿 t。","kind":"问答","id":"1ab1a4930320"},{"n":9,"q":"怎样判断某种固废是否属于危险废物？","a":"先查来源及《国家危险废物名录》，必要时按鉴别标准和方法认定危险特性（如毒性、腐蚀性、易燃性、反应性、感染性）。\n常见例子有焚烧飞灰、废矿物油、废铅酸蓄电池、医疗废物。","kind":"概念","id":"e2ab9d12b633"},{"n":9,"q":"危险废物污染控制的三条途径是什么？","a":"① 清洁生产或工艺改造，从源头防止、减少产生。\n② 已产生的危险废物优先回收利用。\n③ 无法利用的部分进行无害化处理处置。","kind":"问答","id":"30ce092de34b"},{"n":9,"q":"危险废物资源化的“双达标”指什么？","a":"① 资源化产品符合相应产品的质量标准。\n② 剩余物经鉴别达到按一般固废管理的条件。\n设施还要防二次污染并满足排放要求。","kind":"概念","id":"7fbedc150b5a"},{"n":9,"q":"危险废物焚烧和生活垃圾焚烧有哪些主要区别？","a":"课件对比：危废常用回转窑＋二燃室，温度＞1100 ℃，二燃室停留＞2 s，进料需配伍；灰渣按危废要求管理。\n生活垃圾多用机械炉排炉，温度＞850 ℃，炉渣与飞灰分流管理。","kind":"辨析","id":"45744984bf32"},{"n":9,"q":"危废安全填埋比生活垃圾卫生填埋有哪些更严的要求？","a":"入场先鉴别和预处理，按相容性分单元填埋。\n危废场一般规模较小，双层防渗更严格，课件对比 HDPE 膜厚＞2 mm，生活垃圾示例约1.5 mm。\n危废渗滤液更复杂，监测与应急要求也更严。","kind":"辨析","id":"afa71ee96a4f"},{"n":9,"kind":"数值","q":"按第9讲第10页口径，2025年危险废物总量和主要去向占比是多少？","a":"约1.2亿 t，课件给出焚烧约70%～80%、安全填埋约13%。\n第15讲第21页同时写有1.2亿和1.3亿 t。答题先确认题干指明的统计口径。","id":"2430409003eb"},{"n":10,"q":"底泥污染物按课件可分哪四类？","a":"① 有机污染物，常用 COD、TOC 等指标表征。\n② 氮、磷等营养盐。\n③ 重金属。\n④ 持久性有机污染物。","kind":"问答","id":"f39e5bcf5f88"},{"n":10,"q":"工程清淤与环保清淤分别依据什么确定范围和深度？","a":"工程清淤按断面、航深、库容等工程需求确定。\n环保清淤按污染层厚度、污染物释放和生态风险确定，要求薄层精准开挖、少扰动，并处理尾水和泥饼。","kind":"辨析","id":"5ad2d7a2fbc9"},{"n":10,"q":"控截外源后，清淤能对水生态修复起什么作用？","a":"去除受污染底泥，削减内源污染负荷，改善底质和栖息环境，并可改善水动力条件。","kind":"问答","id":"ebd27947814c"},{"n":10,"q":"制定清淤方案必须回答哪四个问题？","a":"① 为什么清：明确治理目标。\n② 清什么：划定目标层和范围。\n③ 怎么清：选择装备、工艺和施工条件。\n④ 怎么处理：确定尾水净化及淤泥、泥饼的去向。","kind":"问答","id":"0f3f994e35ac"},{"n":11,"q":"上覆水以下依次是哪三类底泥？各自的典型密度范围是多少？","a":"以 ρ 表示密度，单位为 g/cm³。\n浮泥：1.0＜ρ≤1.2。\n流泥：1.2＜ρ≤1.35。\n淤泥：1.35＜ρ≤1.8。","kind":"数值","id":"45f4958bf4fb"},{"n":11,"q":"环保绞吸设备为什么能做薄层清淤？","a":"带状刀片适合薄层精准开挖，防扩散罩可限制扰动和污染扩散。课件示例可做约 10 cm 级薄层清淤，设备浓度可达 10% 以上。","kind":"问答","id":"4c3d8b1c5ed1"},{"n":11,"q":"清淤泥浆最常用哪类脱水方法？","a":"课件强调压滤式脱水，典型设备为板框压滤机。借助压力差使水通过滤介质，固体颗粒被截留。工程也可结合堆场沉淀固结、土工管袋等方法。","kind":"问答","id":"86b38ea26ea7"},{"n":11,"q":"课件强调清淤尾水处理的哪项关键污染物指标？","a":"总氮（TN）。项目还应按现场水质关注悬浮物、总磷等，并对分离出的尾水收集处理。","kind":"问答","id":"750655909e82"},{"n":11,"q":"清淤淤泥资源化的「三土三材」各是什么？","a":"三土：土地、土材料、土壤材料。\n三材：建筑材料、水工材料、环保材料。","kind":"概念","id":"f83e6d4e91a4"},{"n":11,"q":"如何确定脱水泥饼的最终利用或处置出路？","a":"以三土为主、三材为辅。结合泥饼污染性、稳定性、用途质量要求和当地消纳需求选择，兼顾利用量与产品价值。无合适利用条件的泥饼安排安全处置。","kind":"问答","id":"dd7fce9612d7"},{"n":12,"q":"我国市政污泥的三个典型物性特点是什么？","a":"① 含水率高，常见机械脱水污泥约 80%。\n② 干基有机质含量相对偏低，灰分偏高。\n③ 普遍含有重金属，利用前须关注泥质。","kind":"问答","id":"fc2edf2e7afc"},{"n":12,"q":"串讲给出的我国市政污泥、工业污泥年产量是多少？","a":"市政污泥约 8000 万 t/年，专题按含水率 80% 的湿污泥计。\n工业污泥约 0.58 亿 t/年，为串讲口径。","kind":"数值","id":"cb7b1a634e7e"},{"n":12,"q":"市政污泥处理处置的三条主要技术路线是什么？","a":"① 焚烧（含脱水干化后焚烧或协同焚烧）。\n② 堆肥后农用。\n③ 填埋。","kind":"问答","id":"ee6e4a9583d0"},{"n":12,"q":"污泥焚烧热量自持是什么意思？课件给的典型数值是多少？","a":"无需辅助燃料即可维持焚烧。课件示例低位热值约 3500 kJ/kg，对应最高含水率约 53%。含水率约 80% 的常规脱水污泥通常仍需预处理降水分，或采用辅助燃料、协同焚烧等路线。","kind":"数值","id":"6f59a2dc4f8e"},{"n":13,"q":"污泥中的水有哪四种形态？哪类水相对好脱除？","a":"絮体间隙水、絮体内部水、表面结合水、细胞水。间隙自由水较易脱除，胞内水和结合紧密的水较难机械脱除。","kind":"问答","id":"fae38730bf60"},{"n":13,"q":"板框压滤脱水包括哪两个关键步骤？","a":"调理或絮凝后将泥浆送入滤室。\n① 压力差驱动过滤：水过布，颗粒截留成饼。\n② 固结压榨：隔膜加压等方式进一步排水，降低泥饼含水率。","kind":"问答","id":"451e4deccc9e"},{"n":13,"q":"一次与二次深度脱水的起始物料有何不同？深度脱水与干化靠什么去水？","a":"一次以浓缩污泥为起点，二次以常规脱水后的湿污泥为起点。深度脱水靠机械，课件口径为脱水后含水率低于 60%。干化借助热能去水。","kind":"辨析","id":"65227d9fac29"},{"n":13,"q":"污泥协同处理分为哪两类？各举一例。","a":"① 与其他废物协同，例如和餐厨垃圾共消化，或与生活垃圾共焚烧。\n② 与产业生产协同，例如干化后掺煤发电或进入水泥窑协同处置。","kind":"问答","id":"e6c9df4b325d"},{"n":13,"q":"镇江、宜兴和广州中科建禹三个实例分别采用什么协同路线？","a":"镇江：污泥与餐厨垃圾协同厌氧消化。\n宜兴：污泥干化后掺煤，在电厂协同焚烧。\n广州中科建禹：板框脱水、圆盘干化后入水泥窑协同处置。","kind":"问答","id":"86f90f0c8551"},{"n":14,"q":"农业废弃物按来源可分哪三类？","a":"种植业残余，如秸秆、枝叶、外壳。畜禽养殖剩余物，如粪便、栏圈铺垫材料。加工类残余物，如加工边角料和残渣。","kind":"问答","id":"6bf54fb5daa3"},{"n":14,"q":"串讲的秸秆年产量记多少？分讲的畜禽粪、尿分别记多少？","a":"秸秆分讲约 6～8 亿 t/年，串讲取约 8 亿 t/年。\n分讲引用第一次全国污染源普查，粪便约 2.43 亿 t/年、尿液约 1.63 亿 t/年。串讲另把「畜禽粪尿」合写为约 2.4 亿 t，答题时按题干口径选取。","kind":"数值","id":"1e205e930442"},{"n":14,"q":"农业废弃物资源化的「五化」是什么？","a":"肥料化、饲料化、能源化、原料化、基料化。\n对应例子：还田或堆肥、青贮、沼气或成型燃料、板材或纸浆、食用菌培养基。","kind":"问答","id":"7a8577429841"},{"n":14,"q":"秸秆的七项重点利用技术是什么？","a":"① 收集处理体系。② 肥料化。③ 饲料化。④ 能源化。⑤ 生物转化食用菌。⑥ 炭化活化。⑦ 作为原料开展加工业利用。\n记法：五化对应的利用技术，加收集处理、炭化活化。","kind":"问答","id":"084881cf5e09"},{"n":14,"q":"什么是建筑垃圾？常用分类有哪五类？","a":"建设、改扩建、拆除及居民装饰装修等活动产生的弃土、弃料和其他固体废物。\n五类：工程渣土、工程泥浆、施工垃圾、拆除垃圾、装修垃圾。","kind":"概念","id":"e7114f3ce3a1"},{"n":14,"q":"相较其他垃圾，课件归纳的建筑垃圾处理管理特点是什么？","a":"申报排放、特许服务、单独收集处理、以惰性处理为主。有害组分应分出并按属性管理。","kind":"辨析","id":"4a031244264a"},{"n":14,"q":"建筑垃圾处理与再生利用的主流程是什么？","a":"先分类分选和破碎，再利用可回收组分，剩余不可利用的惰性残余物送指定消纳设施。\n渣土可回填，废混凝土可制再生骨料，废砖瓦可作路基垫层或砌块，废钢可回炉。","kind":"问答","id":"11dc3e9248e9"},{"n":15,"q":"某厂日焚烧500 t生活垃圾。按课堂示意比例，炉渣、飞灰各多少？飞灰处置费2000元/t，日费用多少？","a":"入炉湿垃圾的示意去向为75%气体、22%炉渣、3%飞灰。\n炉渣＝500×22%＝110 t/d。飞灰＝500×3%＝15 t/d。\n飞灰处置费＝15×2000＝30 000元/d。","kind":"计算","id":"3030962284c2"},{"n":15,"q":"1 t 垃圾低位热值为 7200 kJ/kg，净发电效率 25%，净发多少电？","a":"500 kWh。1 kWh＝3600 kJ，净发电量＝1000 kg×7200 kJ/kg×25%÷3600 kJ/kWh。若只给锅炉热效率，可求回收热量，净发电还需发电效率等条件。","kind":"计算","id":"aff6be9dfa49"},{"n":15,"q":"每万吨进厂污水约产多少 80% 含水率的湿污泥？折合多少干固体？","a":"湿污泥约 6.25 t。干固体约 6.25×(1－80%)＝1.25 t。按污水密度约 1 t/m³，可用于每万 m³ 污水的课堂估算。","kind":"数值","id":"d158734299ca"},{"n":15,"q":"泥样湿质量10 t、水质量8 t、总体积8 m³，湿基含水率、干基含水率和湿密度各是多少？","a":"干固体质量＝10－8＝2 t。\n湿基含水率＝8÷10＝80%，质量含固率＝20%。\n干基含水率＝8÷2＝400%。\n湿密度＝10÷8＝1.25 t/m³。","kind":"计算","id":"c36e5263168f"},{"n":15,"q":"5 t、含水率 80% 的湿泥脱水到 50%，得多少泥饼？","a":"2 t。无固体流失或添加时，干固体守恒。初始干固体＝5×(1－80%)＝1 t，泥饼质量＝1÷(1－50%)＝2 t，排水 3 t。","kind":"计算","id":"3790e1e36697"},{"n":15,"q":"淤泥固体颗粒的课件比重是多少？若干固体 2.7 t、孔隙水 2 t，泥样饱和时有多大？","a":"颗粒比重 Gₛ＝2.7。取水密度为 1 t/m³，颗粒密度即 2.7 t/m³。\n忽略气相，V＝mₛ/ρₛ＋m_w/ρ_w＝2.7/2.7＋2/1＝3 m³。","kind":"计算","id":"b90f99775592"},{"n":15,"q":"面对一种固废，串讲建议围绕哪三个属性组织处理处置思路？","a":"① 体积：转化或减容，如焚烧、脱水、压实。\n② 毒性：分解、稳定化、转化或安全隔离。\n③ 价值：回收能源、材料或营养基质。","kind":"问答","id":"0a109c7cd51d"}]</script>
+<script>
+  'use strict';
+
+  const names = [
+    '', '固废概论', '循环经济', '生活垃圾', '垃圾焚烧', '堆肥', '厌氧消化', '热解',
+    '卫生填埋', '危险废物', '环保清淤', '淤泥处理', '市政污泥', '污泥脱水与协同',
+    '农业废弃物与建筑垃圾', '串讲与计算',
+  ];
+  const ids = [
+    'mastered', 'progress', 'review-count', 'chapter', 'scope', 'shuffle', 'card-content',
+    'topic', 'kind', 'state', 'index', 'question', 'flip', 'answer', 'answer-text',
+    'needs-review', 'learned', 'empty', 'empty-title', 'empty-text', 'clear-filter',
+    'previous', 'next', 'notice', 'storage-note',
+  ];
+  const el = Object.fromEntries(ids.map(id => [id, document.getElementById(id)]));
+  const data = JSON.parse(document.getElementById('card-data').textContent);
+  const cards = new Map(data.map(card => [card.id, card]));
+  const baseOrder = [...data.filter(card => card.n === 15), ...data.filter(card => card.n !== 15)];
+  const key = 'solid-waste-flashcards.v1';
+  const statusLabels = {review: '待复习', learned: '已掌握'};
+  let ratings = {};
+  let order = baseOrder;
+  let activeCards = [];
+  let position = 0;
+  let revealed = false;
+  let shuffled = false;
+
+  try {
+    const saved = JSON.parse(localStorage.getItem(key) || '{}');
+    ratings = Object.fromEntries(Object.entries(saved || {}).filter(([id, grade]) =>
+      cards.has(id) && (grade === 'review' || grade === 'learned')
+    ));
+  } catch {
+    el['storage-note'].hidden = false;
+  }
+
+  names.slice(1).forEach((name, index) => {
+    const chapter = index + 1;
+    const option = new Option('第 ' + chapter + ' 讲 · ' + name, String(chapter));
+    el.chapter.add(option);
+  });
+  el.progress.max = cards.size;
+
+  function selectCards() {
+    activeCards = order.filter(card => {
+      if (el.chapter.value !== 'all' && card.n !== Number(el.chapter.value)) return false;
+      if (el.scope.value === 'number') return card.kind === '数值' || card.kind === '计算';
+      if (el.scope.value === 'review') return ratings[card.id] === 'review';
+      return true;
+    });
+  }
+
+  function render(message = '') {
+    const grades = Object.values(ratings);
+    const mastered = grades.filter(grade => grade === 'learned').length;
+    const review = grades.filter(grade => grade === 'review').length;
+    el.mastered.textContent = '已掌握 ' + mastered + ' / ' + cards.size;
+    el['review-count'].textContent = '待复习 ' + review + ' 张';
+    el.progress.value = mastered;
+    el.previous.disabled = position <= 0;
+    el.next.disabled = position >= activeCards.length - 1;
+    el.shuffle.setAttribute('aria-pressed', String(shuffled));
+    el.shuffle.textContent = shuffled ? '恢复顺序' : '随机顺序';
+    const card = activeCards[position];
+    el['card-content'].hidden = !card;
+    el.empty.hidden = Boolean(card);
+
+    if (!card) {
+      const reviewOnly = el.scope.value === 'review';
+      el['empty-title'].textContent = reviewOnly ? '这里没有待复习的卡片' : '这个范围没有卡片';
+      el['empty-text'].textContent = reviewOnly ? '翻卡后标记「待复习」，就可以在这里集中重刷。' : '选择其他讲次，或查看全部卡片。';
+      el.notice.textContent = message + el['empty-title'].textContent;
+      return;
+    }
+
+    el.topic.textContent = '第 ' + card.n + ' 讲 · ' + names[card.n];
+    el.kind.textContent = card.kind;
+    const grade = ratings[card.id];
+    el.state.hidden = !grade;
+    el.state.textContent = statusLabels[grade] || '';
+    el.state.dataset.status = grade || '';
+    el.index.textContent = (position + 1) + ' / ' + activeCards.length;
+    el.question.textContent = card.q;
+    el.answer.hidden = !revealed;
+    el.flip.setAttribute('aria-expanded', String(revealed));
+    el.flip.textContent = revealed ? '收起答案' : '翻卡看答案';
+    el.flip.classList.toggle('primary', !revealed);
+    if (revealed) {
+      const paragraphs = card.a.split('\n').filter(line => line.trim()).map(line => {
+        const p = document.createElement('p');
+        p.textContent = line;
+        return p;
+      });
+      el['answer-text'].replaceChildren(...paragraphs);
+    } else {
+      el['answer-text'].replaceChildren();
+    }
+    el.notice.textContent = message + (revealed ? '参考答案。' + card.a : '第 ' + (position + 1) + ' 张。' + card.q);
+  }
+
+  function restart() {
+    position = 0;
+    revealed = false;
+    selectCards();
+    render();
+  }
+
+  function move(offset) {
+    const next = position + offset;
+    if (next < 0 || next >= activeCards.length) return;
+    const previousFocus = document.activeElement;
+    position = next;
+    revealed = false;
+    render();
+    // Keep keyboard navigation usable when the active arrow reaches an endpoint.
+    if (previousFocus?.disabled || el.answer.contains(previousFocus)) el.flip.focus();
+  }
+
+  function flip() {
+    if (!activeCards.length) return;
+    revealed = !revealed;
+    render();
+  }
+
+  function gradeCurrent(grade) {
+    const card = activeCards[position];
+    if (!card || !revealed) return;
+    ratings[card.id] = grade;
+    try {
+      localStorage.setItem(key, JSON.stringify(ratings));
+      el['storage-note'].hidden = true;
+    } catch {
+      el['storage-note'].hidden = false;
+    }
+
+    if (el.scope.value === 'review' && grade === 'learned') {
+      selectCards();
+      position = Math.max(0, Math.min(position, activeCards.length - 1));
+      revealed = false;
+    } else if (position < activeCards.length - 1) {
+      position += 1;
+      revealed = false;
+    }
+    render('已标记为' + statusLabels[grade] + '。');
+    (activeCards.length ? el.flip : el['clear-filter']).focus();
+  }
+
+  el.chapter.addEventListener('change', restart);
+  el.scope.addEventListener('change', restart);
+  el.shuffle.addEventListener('click', () => {
+    shuffled = !shuffled;
+    order = baseOrder.slice();
+    if (shuffled) {
+      for (let index = order.length - 1; index > 0; index--) {
+        const chosen = Math.floor(Math.random() * (index + 1));
+        [order[index], order[chosen]] = [order[chosen], order[index]];
+      }
+    }
+    restart();
+  });
+  el.flip.addEventListener('click', flip);
+  el.previous.addEventListener('click', () => move(-1));
+  el.next.addEventListener('click', () => move(1));
+  el['needs-review'].addEventListener('click', () => gradeCurrent('review'));
+  el.learned.addEventListener('click', () => gradeCurrent('learned'));
+  el['clear-filter'].addEventListener('click', () => {
+    el.chapter.value = 'all';
+    el.scope.value = 'all';
+    restart();
+    el.flip.focus();
+  });
+  document.addEventListener('keydown', event => {
+    if (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey || event.repeat) return;
+    if (event.target.closest('input, select, textarea, [contenteditable]')) return;
+    if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
+      event.preventDefault();
+      move(event.key === 'ArrowLeft' ? -1 : 1);
+    } else if (event.key === ' ' && !event.target.closest('button, a')) {
+      event.preventDefault();
+      flip();
+    }
+  });
+
+  restart();
+</script>
+</body>
+</html>
+
+
+
